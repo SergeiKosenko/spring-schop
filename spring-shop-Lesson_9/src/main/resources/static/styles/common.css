@@ -2,6 +2,10 @@
     position: relative;
 }
 
+h1 {
+    padding: 65px;
+}
+
 .shopping-cart-badge {
     color: lightgrey;
     margin-right: 15px;

@@ -1,62 +1,61 @@
 package ru.kosenko.springshoplesson_9.service;
 
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.messaging.Message;
-import org.springframework.messaging.MessageChannel;
-import org.springframework.messaging.support.MessageBuilder;
+import javax.mail.MessagingException;
+import javax.mail.internet.MimeMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
 public class EmailService {
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(EmailService.class);
 
-  private final MessageChannel messageChannel;
+  private final JavaMailSender mailSender;
 
-  public EmailService(@Qualifier("sendMailChannel") MessageChannel messageChannel) {
-    this.messageChannel = messageChannel;
-  }
+  public EmailService(JavaMailSender mailSender) {this.mailSender = mailSender;}
 
-  public void sendMail(int count, String token, String email) {
-    for (int i = 0; i < count; i++) {
-      Message message = MessageBuilder.withPayload(createMailMessage(token, email)).build();
-      messageChannel.send(message);
+  @Async
+  public void createMailMessage(String email, String token) {
+    try {
+      MimeMessage mimeMessage = mailSender.createMimeMessage();
+      MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "utf-8");
+      helper.setTo(email);
+      helper.setFrom("serg.cos@internet.ru");
+      helper.setSubject("Подтвердите ваш email");
+      helper.setText(generateVerificationEmailText(token), true);
 
+      mailSender.send(mimeMessage);
+    } catch (MessagingException e) {
+      LOGGER.error("failed to send mail ", e);
     }
-  }
-
-  private SimpleMailMessage createMailMessage(String token, String email) {
-    SimpleMailMessage message = new SimpleMailMessage();
-    message.setSubject("Подтверждение Email для завершения регистрации");
-    message.setText("http://localhost:8282/register/confirm?token=" + token);
-//    message.setText(generateVerificationEmailText(token), true);
-//    message.setText(generateVerificationEmailText(token));
-
-
-    message.setTo(email);
-    message.setFrom("serg.cos@internet.ru");
-
-    return message;
 
   }
-
 
   // TODO работа с mail темплейтами попробовать вынести в базу
   private String generateVerificationEmailText(String token) {
-    return "<!doctype html>" +
-           "<html>" +
-           "  <head>" +
-           "    <meta name=viewport content=width=device-width, initial-scale=1.0/>" +
-           "    <meta http-equiv=Content-Type content=text/html; charset=UTF-8 />" +
-           "    <title>Simple Transactional Email</title>" +
-           "    <style>" +
-
-           "      img {" +
-           "        border: none;" +
-           "        -ms-interpolation-mode: bicubic;" +
-           "        max-width: 100%; n" +
-           "      }" +
-           "\n" +
+    return "<!doctype html>\n" +
+            "<html>\n" +
+            "  <head>\n" +
+            "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"/>\n" +
+            "    <meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n" +
+            "    <title>Simple Transactional Email</title>\n" +
+            "    <style>\n" +
+            "      /* -------------------------------------\n" +
+            "          GLOBAL RESETS\n" +
+            "      ------------------------------------- */\n" +
+            "      \n" +
+            "      /*All the styling goes here*/\n" +
+            "      \n" +
+            "      img {\n" +
+            "        border: none;\n" +
+            "        -ms-interpolation-mode: bicubic;\n" +
+            "        max-width: 100%; \n" +
+            "      }\n" +
+            "\n" +
            "      body {\n" +
            "        background-color: #f6f6f6;\n" +
            "        font-family: sans-serif;\n" +
@@ -389,16 +388,15 @@ public class EmailService {
            "                  <table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\">\n" +
            "                    <tr>\n" +
            "                      <td>\n" +
-           "                        <p>Перейдите по ссылке для подтверждения</p>\n" +
+           "                        <p></p>\n" +
            "                        <table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" class=\"btn btn-primary\">\n" +
            "                          <tbody>\n" +
            "                            <tr>\n" +
-           "                              <td align=\"left\">\n" +
+           "                              <td align=\"center\">\n" +
            "                                <table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\">\n" +
            "                                  <tbody>\n" +
            "                                    <tr>\n" +
-           "                                      <td> <a href=\"http://localhost:8282/register/confirm?token=" + token + "\">Подтвердить</a> </td>" +
-            "                                     http://localhost:8282/register/confirm?token=" + token +
+           "                                      <td> <a href=\"http://localhost:8282/register/confirm?token=" + token + "\">Нажмите, чтобы завершить регистрацию</a> </td>" +
            "                                    </tr>\n" +
            "                                  </tbody>\n" +
            "                                </table>\n" +
@@ -442,4 +440,5 @@ public class EmailService {
            "  </body>\n" +
            "</html>";
   }
+
 }

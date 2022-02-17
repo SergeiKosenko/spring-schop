@@ -1,0 +1,35 @@
+server:
+  port: 8282
+#  servlet:
+#    session:
+#      cookie:
+#        max-age: 10s
+spring:
+  datasource:
+    driver-class-name: org.h2.Driver
+    # Для работы с h2 в файловом режиме пропишите в похожем виде:
+    #url: jdbc:h2:file:C:/Users/.../TestDataBase
+    url: jdbc:h2:mem:market-db1;MODE=PostgreSQL
+    username: admin
+    password: admin
+  jpa:
+    show-sql: true
+  h2:
+    console:
+      enabled: true
+  mail:
+    host: smtp.mail.ru
+    port: 25
+    username: serg.cos@internet.ru
+    password: 5M6WkpXsCZ1ZkRFDN3t4
+    properties:
+      mail:
+        smtp:
+          ssl:
+            trust: "*"
+          auth: true
+          starttls:
+            enable: true
+          connectiontimeout: 5000
+          timeout: 3000
+          writetimeout: 5000
